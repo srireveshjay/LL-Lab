@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linked List Lab — a visual companion for teaching linked lists</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0B0E14;
+    --bg-raised: #10151F;
+    --panel: #10151F;
+    --panel-border: #202838;
+    --node-bg: #161B22;
+    --node-border: #2A3140;
+    --trace: #56D4C7;
+    --data: #E3B341;
+    --head: #3FB950;
+    --curr: #F0883E;
+    --prev: #79C0FF;
+    --extra1: #F778BA;
+    --extra2: #D2A8FF;
+    --text: #C9D1D9;
+    --text-dim: #6E7681;
+    --text-bright: #F0F3F6;
+    --danger: #F85149;
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 15% 0%, rgba(86,212,199,0.06), transparent 40%),
+      radial-gradient(circle at 85% 100%, rgba(240,136,62,0.06), transparent 40%),
+      var(--bg);
+    color:var(--text);
+    font-family:var(--font-mono);
+    min-height:100vh;
+  }
+  ::selection{background:rgba(86,212,199,0.3);}
+
+  header{
+    padding:28px 32px 18px;
+    border-bottom:1px solid var(--panel-border);
+  }
+  header h1{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:28px;
+    margin:0 0 4px;
+    color:var(--text-bright);
+    letter-spacing:-0.02em;
+  }
+  header h1 .box{
+    display:inline-block;
+    border:2px solid var(--trace);
+    color:var(--trace);
+    font-family:var(--font-mono);
+    font-size:15px;
+    padding:2px 8px;
+    border-radius:4px;
+    vertical-align:middle;
+    margin-right:10px;
+    transform:translateY(-2px);
+  }
+  header p{
+    margin:0;
+    color:var(--text-dim);
+    font-size:14px;
+    max-width:760px;
+    line-height:1.5;
+  }
+  header p code{color:var(--data);}
+
+  .app{
+    display:grid;
+    grid-template-columns: 300px 1fr 340px;
+    gap:1px;
+    background:var(--panel-border);
+    min-height:calc(100vh - 96px);
+  }
+  @media (max-width: 980px){
+    .app{grid-template-columns: 1fr;}
+  }
+
+  aside, .stage-wrap{
+    background:var(--bg);
+  }
+
+  /* ---------- Controls sidebar ---------- */
+  .controls{
+    padding:20px;
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+    overflow-y:auto;
+  }
+  .ctrl-group h2{
+    font-family:var(--font-display);
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.12em;
+    color:var(--text-dim);
+    margin:0 0 10px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .ctrl-group h2::after{
+    content:"";
+    flex:1;
+    height:1px;
+    background:var(--panel-border);
+  }
+  .row{display:flex; gap:8px; margin-bottom:8px;}
+  input[type=text], input[type=number]{
+    background:var(--node-bg);
+    border:1px solid var(--node-border);
+    color:var(--text-bright);
+    font-family:var(--font-mono);
+    font-size:13px;
+    padding:8px 10px;
+    border-radius:6px;
+    width:100%;
+    outline:none;
+  }
+  input[type=text]:focus, input[type=number]:focus{
+    border-color:var(--trace);
+  }
+  button{
+    font-family:var(--font-mono);
+    font-size:12.5px;
+    border-radius:6px;
+    border:1px solid var(--node-border);
+    background:var(--node-bg);
+    color:var(--text);
+    padding:9px 10px;
+    cursor:pointer;
+    text-align:left;
+    transition:border-color .15s, transform .1s, background .15s;
+    width:100%;
+  }
+  button:hover:not(:disabled){
+    border-color:var(--trace);
+    background:#1a2130;
+  }
+  button:active:not(:disabled){transform:scale(0.98);}
+  button:disabled{opacity:0.35; cursor:not-allowed;}
+  button.primary{
+    background:linear-gradient(180deg, rgba(86,212,199,0.16), rgba(86,212,199,0.06));
+    border-color:var(--trace);
+    color:var(--text-bright);
+    font-weight:600;
+  }
+  button.stack{margin-bottom:6px;}
+  button.small{font-size:11.5px; padding:6px 8px;}
+  button.danger{border-color:var(--danger); color:var(--danger); background:transparent;}
+  button.danger:hover{background:rgba(248,81,73,0.1);}
+
+  .code-btn{font-family:var(--font-mono); position:relative; padding-left:14px;}
+  .code-btn::before{content:"▸"; position:absolute; left:4px; color:var(--trace); font-size:10px; top:11px;}
+
+  .pointer-preset-row{display:flex; gap:6px; flex-wrap:wrap;}
+  .pointer-preset-row button{width:auto; flex:1 1 auto;}
+
+  #pointerList{display:flex; flex-direction:column; gap:6px;}
+  .ptr-card{
+    display:flex; align-items:center; gap:8px;
+    background:var(--node-bg); border:1px solid var(--node-border);
+    border-radius:6px; padding:6px 8px; font-size:12px;
+  }
+  .ptr-dot{width:9px; height:9px; border-radius:50%; flex-shrink:0;}
+  .ptr-name{font-weight:700; color:var(--text-bright);}
+  .ptr-target{color:var(--text-dim); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .ptr-actions{display:flex; gap:4px;}
+  .ptr-actions button{width:auto; padding:4px 6px; font-size:11px;}
+
+  .legend{display:flex; flex-direction:column; gap:8px; font-size:12px; color:var(--text-dim);}
+  .legend-item{display:flex; align-items:center; gap:8px;}
+  .legend-swatch{width:16px; height:16px; border-radius:4px; flex-shrink:0; border:1px solid var(--node-border);}
+
+  .hint{font-size:11.5px; color:var(--text-dim); line-height:1.5; margin:0;}
+
+  /* ---------- Stage ---------- */
+  .stage-wrap{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+  }
+  .stage-toolbar{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 18px; border-bottom:1px solid var(--panel-border);
+    font-size:11.5px; color:var(--text-dim);
+  }
+  .stage-toolbar b{color:var(--text-bright);}
+  .stage{
+    position:relative;
+    flex:1;
+    min-height:520px;
+    overflow:auto;
+    background-image: radial-gradient(circle, #1a2130 1px, transparent 1px);
+    background-size:22px 22px;
+  }
+  .stage-inner{position:relative; width:1600px; height:900px;}
+  svg.links-layer{position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; overflow:visible;}
+  .nodes-layer, .pointers-layer{position:absolute; top:0; left:0; width:100%; height:100%;}
+
+  .node{
+    position:absolute;
+    width:150px;
+    user-select:none;
+    touch-action:none;
+    cursor:grab;
+  }
+  .node.dragging{cursor:grabbing; z-index:50;}
+  .node .addr{
+    font-size:10px; color:var(--text-dim); margin-bottom:3px; letter-spacing:0.03em;
+  }
+  .node-box{
+    display:flex;
+    border:1.5px solid var(--node-border);
+    border-radius:8px;
+    background:var(--node-bg);
+    box-shadow:0 4px 14px rgba(0,0,0,0.35);
+    overflow:hidden;
+  }
+  .node.selected .node-box{border-color:var(--trace); box-shadow:0 0 0 2px rgba(86,212,199,0.35), 0 4px 14px rgba(0,0,0,0.35);}
+  .cell{
+    padding:12px 8px;
+    font-family:var(--font-mono);
+    font-size:15px;
+    text-align:center;
+  }
+  .cell.data{
+    flex:1.3;
+    color:var(--data);
+    font-weight:700;
+    border-right:1px solid var(--node-border);
+  }
+  .cell.next{
+    flex:0.8;
+    color:var(--text-dim);
+    font-size:12px;
+    display:flex; align-items:center; justify-content:center;
+    cursor:crosshair;
+  }
+  .cell.next.linked{color:var(--trace);}
+  .cell.next .ground{font-size:14px; opacity:0.6;}
+  .node .label{
+    font-size:9.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-dim); text-align:center; margin-top:3px;
+  }
+
+  .flag{
+    position:absolute;
+    display:flex; align-items:center; gap:5px;
+    padding:5px 10px;
+    border-radius:14px;
+    font-size:12px;
+    font-weight:700;
+    font-family:var(--font-mono);
+    background:var(--node-bg);
+    border:1.5px solid var(--node-border);
+    cursor:grab;
+    user-select:none;
+    touch-action:none;
+    transition: left .45s cubic-bezier(.4,1.3,.4,1), top .45s cubic-bezier(.4,1.3,.4,1), box-shadow .2s;
+    z-index:20;
+    white-space:nowrap;
+  }
+  .flag.dragging{transition:none; cursor:grabbing; z-index:60; box-shadow:0 6px 18px rgba(0,0,0,0.5);}
+  .flag .dot{width:8px; height:8px; border-radius:50%;}
+  .flag .del{
+    margin-left:2px; color:var(--text-dim); font-weight:400; cursor:pointer; font-size:13px;
+  }
+  .flag .del:hover{color:var(--danger);}
+
+  .empty-state{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    text-align:center; color:var(--text-dim); font-size:13px; max-width:320px;
+    pointer-events:none;
+  }
+  .empty-state .big{font-size:34px; margin-bottom:10px;}
+
+  /* ---------- Transcript ---------- */
+  .transcript-wrap{
+    display:flex; flex-direction:column;
+    height:100%;
+  }
+  .transcript-header{
+    padding:12px 18px; border-bottom:1px solid var(--panel-border);
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .transcript-header h2{
+    font-family:var(--font-display); font-size:13px; margin:0; color:var(--text-bright);
+    display:flex; align-items:center; gap:8px;
+  }
+  .dot3{display:flex; gap:5px;}
+  .dot3 span{width:8px; height:8px; border-radius:50%;}
+  .reference{
+    padding:14px 18px; border-bottom:1px solid var(--panel-border);
+    font-size:12px; color:var(--text-dim); line-height:1.7;
+    white-space:pre;
+    overflow-x:auto;
+  }
+  .reference .kw{color:#F778BA;}
+  .reference .fn{color:var(--trace);}
+  .reference .self{color:var(--curr);}
+  #transcript{
+    flex:1; overflow-y:auto; padding:14px 18px;
+    font-size:12.5px; line-height:1.9;
+  }
+  #transcript .line{white-space:pre; }
+  #transcript .line .comment{color:var(--text-dim); font-style:italic;}
+  #transcript .placeholder{color:var(--text-dim); font-style:italic;}
+  .var-New{color:var(--data);}
+  .var-head{color:var(--head);}
+  .var-curr{color:var(--curr);}
+  .var-prev{color:var(--prev);}
+  .var-extra1{color:var(--extra1);}
+  .var-extra2{color:var(--extra2);}
+
+  footer{
+    text-align:center; padding:14px; font-size:11px; color:var(--text-dim);
+    border-top:1px solid var(--panel-border);
+  }
+
+  ::-webkit-scrollbar{width:10px; height:10px;}
+  ::-webkit-scrollbar-thumb{background:#232b3a; border-radius:6px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="box">●→</span>Linked List Lab</h1>
+  <p>An interactive companion for teaching singly linked lists. Every click on the left mirrors a line of Python on the right — click <code>New = Node(e)</code> to create a node, drag pointer flags between boxes, or hit <code>curr = curr.next</code> to watch a pointer step through the list.</p>
+</header>
+
+<div class="app">
+
+  <!-- ============ LEFT: CONTROLS ============ -->
+  <aside class="controls">
+
+    <div class="ctrl-group">
+      <h2>Create</h2>
+      <div class="row">
+        <input type="text" id="dataInput" placeholder="value, e.g. 12" maxlength="8">
+      </div>
+      <button class="primary code-btn" id="btnCreate">New = Node(e)</button>
+    </div>
+
+    <div class="ctrl-group">
+      <h2>Head &amp; traversal pointers</h2>
+      <button class="code-btn stack" id="btnHead">head = New</button>
+      <button class="code-btn stack" id="btnPrev">prev = New</button>
+      <button class="code-btn stack" id="btnCurrHead">curr = head</button>
+      <button class="code-btn stack" id="btnStep">curr = curr.next</button>
+    </div>
+
+    <div class="ctrl-group">
+      <h2>Linking nodes</h2>
+      <button class="code-btn stack" id="btnLink">prev.next = New</button>
+      <p class="hint">Or drag directly from a node's right-hand box to another node to link them — same as writing <b>X.next = Y</b> by hand. Drag it onto the ground symbol to set it back to <b>None</b>.</p>
+    </div>
+
+    <div class="ctrl-group">
+      <h2>Custom pointers</h2>
+      <div class="row">
+        <input type="text" id="ptrNameInput" placeholder="e.g. runner, slow, fast" maxlength="10">
+        <button id="btnAddPtr" style="width:auto; padding:8px 12px;">+</button>
+      </div>
+      <div id="pointerList"></div>
+      <p class="hint">Handy for teaching two-pointer patterns (slow/fast, cycle detection). Drag any flag onto a node, or use its Step button to advance it by one link.</p>
+    </div>
+
+    <div class="ctrl-group">
+      <h2>Legend</h2>
+      <div class="legend">
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--node-bg); border-color:var(--data);"></span> data cell — value stored in the node</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--node-bg); border-color:var(--trace);"></span> next cell — link to the next node, or <code>None</code></div>
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--head);"></span> a pointer flag (drag me!)</div>
+      </div>
+    </div>
+
+    <div class="ctrl-group">
+      <button class="danger" id="btnReset">Reset everything</button>
+    </div>
+
+  </aside>
+
+  <!-- ============ CENTER: STAGE ============ -->
+  <div class="stage-wrap">
+    <div class="stage-toolbar">
+      <span>Drag nodes to rearrange · drag flags to reassign pointers</span>
+      <span><b id="nodeCount">0</b> node(s)</span>
+    </div>
+    <div class="stage" id="stage">
+      <div class="stage-inner" id="stageInner">
+        <svg class="links-layer" id="linksLayer"></svg>
+        <div class="nodes-layer" id="nodesLayer"></div>
+        <div class="pointers-layer" id="pointersLayer"></div>
+        <div class="empty-state" id="emptyState">
+          <div class="big">▭→∅</div>
+          Click <b>New = Node(e)</b> on the left to create your first node.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ RIGHT: TRANSCRIPT ============ -->
+  <aside class="transcript-wrap">
+    <div class="transcript-header">
+      <h2><span class="dot3"><span style="background:#F85149"></span><span style="background:#F0883E"></span><span style="background:#3FB950"></span></span>console.py</h2>
+    </div>
+    <div class="reference"><span class="kw">class</span> <span class="fn">Node</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="self">self</span>, data):
+        <span class="self">self</span>.data = data
+        <span class="self">self</span>.next = <span class="kw">None</span></div>
+    <div id="transcript">
+      <div class="placeholder"># actions you take on the left will appear here as code ↓</div>
+    </div>
+  </aside>
+
+</div>
+
+<footer>Linked List Lab — a visual companion for teaching singly linked lists · built for the Data Structures &amp; Algorithms classroom</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------------- State ----------------
+  let nodes = [];        // {id, data, addr, x, y, next: id|null}
+  let pointers = [];     // {name, target: id|null, color, x, y, isDefault}
+  let nodeSeq = 0;
+  let addrBase = 0x1000;
+  let selectedNodeId = null; // for click-to-link fallback (not required, drag is primary)
+
+  const PALETTE_ORDER = ['New','head','prev','curr'];
+  const COLOR_MAP = {New:'var(--data)', head:'var(--head)', prev:'var(--prev)', curr:'var(--curr)'};
+  const EXTRA_COLORS = ['var(--extra1)','var(--extra2)','#7EE787','#FFA657','#A5D6FF'];
+  let extraColorIdx = 0;
+
+  const stage = document.getElementById('stage');
+  const stageInner = document.getElementById('stageInner');
+  const nodesLayer = document.getElementById('nodesLayer');
+  const pointersLayer = document.getElementById('pointersLayer');
+  const linksLayer = document.getElementById('linksLayer');
+  const emptyState = document.getElementById('emptyState');
+  const transcriptEl = document.getElementById('transcript');
+  const nodeCountEl = document.getElementById('nodeCount');
+  const pointerListEl = document.getElementById('pointerList');
+
+  // ---------------- Helpers ----------------
+  function getPointer(name){ return pointers.find(p=>p.name===name); }
+  function getNode(id){ return nodes.find(n=>n.id===id); }
+  function fmtAddr(a){ return '0x' + a.toString(16).toUpperCase().padStart(4,'0'); }
+
+  function refByLoc(nodeId){
+    // Prefer to reference a node by a pointer name that targets it, for readable transcript lines
+    if(nodeId===null||nodeId===undefined) return null;
+    const p = pointers.find(p=>p.target===nodeId);
+    if(p) return {label:p.name, cls:'var-'+(PALETTE_ORDER.includes(p.name)?p.name:'extra1')};
+    const n = getNode(nodeId);
+    return {label:n?fmtAddr(n.addr):'?', cls:''};
+  }
+
+  function log(html){
+    const placeholder = transcriptEl.querySelector('.placeholder');
+    if(placeholder) placeholder.remove();
+    const div = document.createElement('div');
+    div.className='line';
+    div.innerHTML = html;
+    transcriptEl.appendChild(div);
+    transcriptEl.scrollTop = transcriptEl.scrollHeight;
+  }
+  function styled(name){
+    const cls = PALETTE_ORDER.includes(name) ? 'var-'+name : 'var-extra1';
+    return `<span class="${cls}">${name}</span>`;
+  }
+
+  // ---------------- Node creation ----------------
+  function createNode(dataVal){
+    const id = 'n'+(nodeSeq++);
+    const addr = addrBase; addrBase += 0x08;
+    const idx = nodes.length;
+    const node = {
+      id, data:dataVal, addr,
+      x: 40 + idx*190,
+      y: 260,
+      next: null
+    };
+    nodes.push(node);
+
+    // "New" pointer auto (re)assigned to this node
+    let newPtr = getPointer('New');
+    if(!newPtr){
+      newPtr = {name:'New', target:null, color:COLOR_MAP['New'], isDefault:true};
+      pointers.push(newPtr);
+    }
+    newPtr.target = id;
+
+    log(`${styled('New')} = <span style="color:var(--trace)">Node</span>(<span style="color:var(--data)">${escapeHtml(dataVal)}</span>)`);
+    renderAll();
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // ---------------- Pointer assignment ----------------
+  function ensurePointer(name, color){
+    let p = getPointer(name);
+    if(!p){
+      p = {name, target:null, color: color || nextExtraColor(), isDefault: PALETTE_ORDER.includes(name)};
+      pointers.push(p);
+    }
+    return p;
+  }
+  function nextExtraColor(){
+    const c = EXTRA_COLORS[extraColorIdx % EXTRA_COLORS.length];
+    extraColorIdx++;
+    return c;
+  }
+
+  function assignPointer(name, targetId, logLine){
+    const p = ensurePointer(name, COLOR_MAP[name]);
+    p.target = targetId;
+    if(logLine!==false) log(logLine || `${styled(name)} = ${targetId===null? '<span style="color:#F778BA">None</span>' : (refByLoc(targetId)?styled(refByLoc(targetId).label):fmtAddr(getNode(targetId).addr))}`);
+    renderAll();
+  }
+
+  function doHeadEqualsNew(){
+    const nw = getPointer('New');
+    if(!nw || nw.target===null) return;
+    ensurePointer('head', COLOR_MAP.head).target = nw.target;
+    log(`${styled('head')} = ${styled('New')}`);
+    renderAll();
+  }
+  function doPrevEqualsNew(){
+    const nw = getPointer('New');
+    if(!nw || nw.target===null) return;
+    ensurePointer('prev', COLOR_MAP.prev).target = nw.target;
+    log(`${styled('prev')} = ${styled('New')}`);
+    renderAll();
+  }
+  function doCurrEqualsHead(){
+    const hd = getPointer('head');
+    if(!hd || hd.target===null) return;
+    ensurePointer('curr', COLOR_MAP.curr).target = hd.target;
+    log(`${styled('curr')} = ${styled('head')}`);
+    renderAll();
+  }
+  function doStepCurr(){
+    stepPointer('curr');
+  }
+  function stepPointer(name){
+    const p = getPointer(name);
+    if(!p || p.target===null){ return; }
+    const n = getNode(p.target);
+    if(!n) return;
+    if(n.next===null){
+      log(`${styled(name)} = ${styled(name)}.next  <span class="comment"># now None — end of list reached</span>`);
+      p.target = null;
+    } else {
+      log(`${styled(name)} = ${styled(name)}.next`);
+      p.target = n.next;
+    }
+    renderAll();
+  }
+  function doLinkPrevNew(){
+    const pv = getPointer('prev');
+    const nw = getPointer('New');
+    if(!pv || pv.target===null || !nw || nw.target===null) return;
+    linkNodes(pv.target, nw.target);
+    log(`${styled('prev')}.next = ${styled('New')}`);
+    renderAll();
+  }
+
+  function linkNodes(fromId, toId){
+    const from = getNode(fromId);
+    if(!from) return;
+    from.next = toId;
+  }
+  function unlinkNode(fromId){
+    const from = getNode(fromId);
+    if(!from) return;
+    from.next = null;
+    const ref = refByLoc(fromId);
+    log(`${ref?styled(ref.label):fmtAddr(from.addr)}.next = <span style="color:#F778BA">None</span>`);
+  }
+
+  // ---------------- Custom pointer creation / deletion ----------------
+  function addCustomPointer(name){
+    name = name.trim();
+    if(!name) return;
+    if(getPointer(name)){ flashExisting(name); return; }
+    ensurePointer(name);
+    log(`${styled(name)} = <span style="color:#F778BA">None</span>  <span class="comment"># new pointer created — drag it onto a node</span>`);
+    renderAll();
+  }
+  function flashExisting(name){
+    const card = pointerListEl.querySelector(`[data-ptr="${CSS.escape(name)}"]`);
+    if(card){ card.style.borderColor='var(--danger)'; setTimeout(()=>card.style.borderColor='',400); }
+  }
+  function removePointer(name){
+    pointers = pointers.filter(p=>p.name!==name);
+    renderAll();
+  }
+
+  // ---------------- Rendering ----------------
+  function renderAll(){
+    renderNodes();
+    renderPointerFlags();
+    renderPointerList();
+    updateButtons();
+    requestAnimationFrame(updateLinks);
+    nodeCountEl.textContent = nodes.length;
+    emptyState.style.display = nodes.length ? 'none' : 'block';
+  }
+
+  function renderNodes(){
+    nodesLayer.innerHTML = '';
+    nodes.forEach(n=>{
+      const el = document.createElement('div');
+      el.className = 'node';
+      el.style.left = n.x+'px';
+      el.style.top = n.y+'px';
+      el.dataset.id = n.id;
+
+      const linked = n.next !== null;
+      el.innerHTML = `
+        <div class="addr">${fmtAddr(n.addr)}</div>
+        <div class="node-box">
+          <div class="cell data">${escapeHtml(n.data)}</div>
+          <div class="cell next ${linked?'linked':''}" data-role="next" title="Drag to another node to link, or to the stage to clear">
+            ${linked ? '&#8594;' : '<span class="ground">&#9096; None</span>'}
+          </div>
+        </div>
+      `;
+      nodesLayer.appendChild(el);
+      makeNodeDraggable(el, n);
+      makeNextHandleDraggable(el.querySelector('[data-role="next"]'), n);
+    });
+  }
+
+  function renderPointerFlags(){
+    pointersLayer.innerHTML = '';
+    pointers.forEach(p=>{
+      const el = document.createElement('div');
+      el.className = 'flag';
+      el.dataset.name = p.name;
+      el.style.borderColor = p.color;
+      el.style.boxShadow = `0 0 0 1px ${p.color} inset`;
+
+      let x, y;
+      if(p.target !== null){
+        const n = getNode(p.target);
+        if(n){ x = n.x + 75 - 34; y = n.y - 38; }
+      }
+      if(x===undefined){
+        // unattached -> tray row
+        const idx = pointers.filter(pp=>pp.target===null).indexOf(p);
+        x = 40 + idx*110; y = 20;
+      }
+      el.style.left = x+'px';
+      el.style.top = y+'px';
+
+      el.innerHTML = `<span class="dot" style="background:${p.color}"></span>${p.name}<span class="del" title="remove pointer">&times;</span>`;
+      pointersLayer.appendChild(el);
+
+      el.querySelector('.del').addEventListener('click', (e)=>{
+        e.stopPropagation();
+        removePointer(p.name);
+      });
+      makeFlagDraggable(el, p);
+    });
+  }
+
+  function renderPointerList(){
+    pointerListEl.innerHTML = '';
+    if(!pointers.length){
+      pointerListEl.innerHTML = '<p class="hint">No pointers yet.</p>';
+      return;
+    }
+    pointers.forEach(p=>{
+      const card = document.createElement('div');
+      card.className = 'ptr-card';
+      card.dataset.ptr = p.name;
+      const targetLabel = p.target===null ? 'None' : (getNode(p.target) ? getNode(p.target).data : 'None');
+      card.innerHTML = `
+        <span class="ptr-dot" style="background:${p.color}"></span>
+        <span class="ptr-name">${escapeHtml(p.name)}</span>
+        <span class="ptr-target">&rarr; ${p.target===null?'None':'node('+escapeHtml(targetLabel)+')'}</span>
+        <span class="ptr-actions">
+          <button class="small" data-act="step" ${p.target===null?'disabled':''}>.next</button>
+        </span>
+      `;
+      card.querySelector('[data-act="step"]').addEventListener('click', ()=>stepPointer(p.name));
+      pointerListEl.appendChild(card);
+    });
+  }
+
+  function updateButtons(){
+    const nw = getPointer('New');
+    const hd = getPointer('head');
+    const pv = getPointer('prev');
+    const cr = getPointer('curr');
+    document.getElementById('btnHead').disabled = !nw || nw.target===null;
+    document.getElementById('btnPrev').disabled = !nw || nw.target===null;
+    document.getElementById('btnCurrHead').disabled = !hd || hd.target===null;
+    document.getElementById('btnStep').disabled = !cr || cr.target===null;
+    document.getElementById('btnLink').disabled = !(pv && pv.target!==null && nw && nw.target!==null);
+  }
+
+  function updateLinks(){
+    const inner = stageInner.getBoundingClientRect();
+    let svg = `<defs>
+      <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="var(--trace)"/>
+      </marker>
+      <marker id="parrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+      </marker>
+    </defs>`;
+
+    nodes.forEach(n=>{
+      if(n.next===null) return;
+      const target = getNode(n.next);
+      if(!target) return;
+      const fromEl = nodesLayer.querySelector(`.node[data-id="${n.id}"] .cell.next`);
+      const toEl = nodesLayer.querySelector(`.node[data-id="${target.id}"] .node-box`);
+      if(!fromEl||!toEl) return;
+      const fr = fromEl.getBoundingClientRect(), tr = toEl.getBoundingClientRect();
+      const x1 = fr.right - inner.left, y1 = fr.top + fr.height/2 - inner.top;
+      const x2 = tr.left - inner.left, y2 = tr.top + tr.height/2 - inner.top;
+      const dx = Math.max(40, (x2-x1)/2);
+      const path = `M${x1},${y1} C${x1+dx},${y1} ${x2-dx},${y2} ${x2},${y2}`;
+      svg += `<path d="${path}" stroke="var(--trace)" stroke-width="2" fill="none" marker-end="url(#arrow)" opacity="0.9"/>`;
+    });
+
+    pointers.forEach(p=>{
+      if(p.target===null) return;
+      const flagEl = pointersLayer.querySelector(`.flag[data-name="${CSS.escape(p.name)}"]`);
+      const nodeEl = nodesLayer.querySelector(`.node[data-id="${p.target}"] .node-box`);
+      if(!flagEl||!nodeEl) return;
+      const fr = flagEl.getBoundingClientRect(), nr = nodeEl.getBoundingClientRect();
+      const x1 = fr.left + fr.width/2 - inner.left, y1 = fr.bottom - inner.top;
+      const x2 = nr.left + nr.width/2 - inner.left, y2 = nr.top - inner.top;
+      svg += `<path d="M${x1},${y1} L${x2},${y2}" stroke="${p.color}" stroke-width="1.5" fill="none" stroke-dasharray="3,3" marker-end="url(#parrow)" style="color:${p.color}" opacity="0.85"/>`;
+    });
+
+    linksLayer.innerHTML = svg;
+  }
+
+  // ---------------- Dragging: nodes ----------------
+  function makeNodeDraggable(el, node){
+    let sx, sy, ox, oy, dragging=false;
+    el.addEventListener('pointerdown', (e)=>{
+      if(e.target.dataset.role==='next') return; // handled separately
+      dragging = true;
+      el.classList.add('dragging');
+      el.setPointerCapture(e.pointerId);
+      sx = e.clientX; sy = e.clientY; ox = node.x; oy = node.y;
+    });
+    el.addEventListener('pointermove', (e)=>{
+      if(!dragging) return;
+      const dx = e.clientX - sx, dy = e.clientY - sy;
+      node.x = Math.max(0, ox+dx); node.y = Math.max(0, oy+dy);
+      el.style.left = node.x+'px'; el.style.top = node.y+'px';
+      // move any attached flags live + arrows
+      pointersLayer.querySelectorAll('.flag').forEach(f=>{
+        const p = getPointer(f.dataset.name);
+        if(p && p.target===node.id){ f.style.left=(node.x+75-34)+'px'; f.style.top=(node.y-38)+'px'; }
+      });
+      updateLinks();
+    });
+    const end = (e)=>{
+      if(!dragging) return;
+      dragging=false;
+      el.classList.remove('dragging');
+      updateLinks();
+    };
+    el.addEventListener('pointerup', end);
+    el.addEventListener('pointercancel', end);
+  }
+
+  // ---------------- Dragging: next-handle to create links ----------------
+  function makeNextHandleDraggable(handle, node){
+    let ghost=null;
+    handle.addEventListener('pointerdown', (e)=>{
+      e.stopPropagation();
+      handle.setPointerCapture(e.pointerId);
+      ghost = document.createElement('div');
+      ghost.style.position='fixed';
+      ghost.style.width='10px'; ghost.style.height='10px'; ghost.style.borderRadius='50%';
+      ghost.style.background='var(--trace)'; ghost.style.pointerEvents='none'; ghost.style.zIndex=999;
+      document.body.appendChild(ghost);
+      moveGhost(e);
+    });
+    function moveGhost(e){
+      ghost.style.left=(e.clientX-5)+'px'; ghost.style.top=(e.clientY-5)+'px';
+    }
+    handle.addEventListener('pointermove', (e)=>{
+      if(!ghost) return;
+      moveGhost(e);
+    });
+    function end(e){
+      if(!ghost) return;
+      const dropEl = document.elementFromPoint(e.clientX, e.clientY);
+      ghost.remove(); ghost=null;
+      const targetNodeEl = dropEl ? dropEl.closest('.node') : null;
+      if(targetNodeEl && targetNodeEl.dataset.id !== node.id){
+        linkNodes(node.id, targetNodeEl.dataset.id);
+        const ref = refByLoc(node.id);
+        const refT = refByLoc(targetNodeEl.dataset.id);
+        log(`${ref?styled(ref.label):fmtAddr(node.addr)}.next = ${refT?styled(refT.label):fmtAddr(getNode(targetNodeEl.dataset.id).addr)}`);
+        renderAll();
+      } else if(!targetNodeEl){
+        if(node.next!==null){ unlinkNode(node.id); renderAll(); }
+      }
+    }
+    handle.addEventListener('pointerup', end);
+    handle.addEventListener('pointercancel', end);
+  }
+
+  // ---------------- Dragging: pointer flags ----------------
+  function makeFlagDraggable(el, p){
+    let sx, sy, dragging=false;
+    el.addEventListener('pointerdown', (e)=>{
+      if(e.target.classList.contains('del')) return;
+      dragging = true;
+      el.classList.add('dragging');
+      el.setPointerCapture(e.pointerId);
+      const r = el.getBoundingClientRect();
+      const innerR = stageInner.getBoundingClientRect();
+      sx = e.clientX - r.left; sy = e.clientY - r.top;
+    });
+    el.addEventListener('pointermove', (e)=>{
+      if(!dragging) return;
+      const innerR = stageInner.getBoundingClientRect();
+      const x = e.clientX - innerR.left - sx;
+      const y = e.clientY - innerR.top - sy;
+      el.style.left = Math.max(0,x)+'px';
+      el.style.top = Math.max(0,y)+'px';
+      updateLinks();
+    });
+    function end(e){
+      if(!dragging) return;
+      dragging=false;
+      el.classList.remove('dragging');
+      const dropEl = document.elementFromPoint(e.clientX, e.clientY);
+      const targetNodeEl = dropEl ? dropEl.closest('.node') : null;
+      const prevTarget = p.target;
+      if(targetNodeEl){
+        p.target = targetNodeEl.dataset.id;
+      } else {
+        p.target = null;
+      }
+      if(p.target !== prevTarget){
+        const refT = p.target===null ? null : refByLoc(p.target);
+        log(`${styled(p.name)} = ${p.target===null ? '<span style="color:#F778BA">None</span>' : (refT&&refT.label!==p.name ? styled(refT.label) : fmtAddr(getNode(p.target).addr))}`);
+      }
+      renderAll();
+    }
+    el.addEventListener('pointerup', end);
+    el.addEventListener('pointercancel', end);
+  }
+
+  // ---------------- Wire up static controls ----------------
+  document.getElementById('btnCreate').addEventListener('click', ()=>{
+    const input = document.getElementById('dataInput');
+    const val = input.value.trim() || String(Math.floor(Math.random()*90+10));
+    createNode(val);
+    input.value='';
+    input.focus();
+  });
+  document.getElementById('dataInput').addEventListener('keydown', (e)=>{
+    if(e.key==='Enter') document.getElementById('btnCreate').click();
+  });
+  document.getElementById('btnHead').addEventListener('click', doHeadEqualsNew);
+  document.getElementById('btnPrev').addEventListener('click', doPrevEqualsNew);
+  document.getElementById('btnCurrHead').addEventListener('click', doCurrEqualsHead);
+  document.getElementById('btnStep').addEventListener('click', doStepCurr);
+  document.getElementById('btnLink').addEventListener('click', doLinkPrevNew);
+  document.getElementById('btnAddPtr').addEventListener('click', ()=>{
+    const input = document.getElementById('ptrNameInput');
+    addCustomPointer(input.value);
+    input.value='';
+  });
+  document.getElementById('ptrNameInput').addEventListener('keydown', (e)=>{
+    if(e.key==='Enter') document.getElementById('btnAddPtr').click();
+  });
+  document.getElementById('btnReset').addEventListener('click', ()=>{
+    if(!confirm('Clear the whole board and transcript?')) return;
+    nodes=[]; pointers=[]; nodeSeq=0; addrBase=0x1000; extraColorIdx=0;
+    transcriptEl.innerHTML = '<div class="placeholder"># actions you take on the left will appear here as code ↓</div>';
+    renderAll();
+  });
+
+  window.addEventListener('resize', ()=>requestAnimationFrame(updateLinks));
+
+  renderAll();
+})();
+</script>
+</body>
+</html>
